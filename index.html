@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Joss</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/ScrollTrigger.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #050505;
+            --gold: #d4af37;
+            --bronze: #4a3b1a; /* Color madera oscura/bronce para el marco */
+            --text: #e0e0e0;
+        }
+
+        html, body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color) !important;
+            color: var(--text);
+            font-family: 'Lato', sans-serif;
+            width: 100%;
+            overflow-x: hidden;
+            overflow-y: auto !important; 
+            min-height: 100vh;
+        }
+
+        #scroll-track {
+            height: 6000vh; 
+            width: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: -1;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .viewport {
+            position: fixed; 
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            perspective: 1000px;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1;
+            pointer-events: none; 
+        }
+
+        .world {
+            position: relative;
+            width: 100%; height: 100%;
+            transform-style: preserve-3d;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .intro-section {
+            position: absolute;
+            z-index: 100;
+            text-align: center;
+            opacity: 1; 
+            transform: translateZ(0);
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 5vw, 5rem);
+            color: var(--gold);
+            margin-bottom: 15px;
+            text-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+            letter-spacing: 2px;
+        }
+
+        .scroll-hint {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: bounce 2s infinite;
+            opacity: 0.7;
+        }
+
+        .gallery-item {
+            position: absolute;
+            width: 320px; 
+            height: auto;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) translateZ(-5000px); 
+            opacity: 0;
+            display: flex; flex-direction: column; align-items: center;
+            will-change: transform, opacity;
+        }
+
+        /* --- NUEVO DISEÑO DE MARCO (MUSEO) --- */
+        .photo-frame {
+            width: 100%; height: 420px;
+            position: relative;
+            
+            /* 1. Fondo negro (El paspartú) */
+            background: #000;
+            
+            /* 2. Espacio entre la foto y el marco (padding) */
+            padding: 12px; 
+            
+            /* 3. El Marco Físico (Bronce Oscuro) */
+            border: 8px solid #2a2a2a; 
+            
+            /* 4. El Borde Dorado Fino (Outline) */
+            outline: 2px solid var(--gold);
+            outline-offset: -2px; /* Lo mete un poquito para fusionarse */
+
+            /* Sombras para profundidad 3D */
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.8), /* Sombra interna (profundidad) */
+                0 20px 60px rgba(0,0,0,0.9); /* Sombra externa (flotar) */
+                
+            overflow: hidden;
+        }
+
+        .photo-frame img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            opacity: 0.95;
+            display: block;
+            /* Borde sutil a la propia foto para separarla del fondo negro */
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+
+        .caption {
+            margin-top: 25px;
+            text-align: center;
+            background: rgba(10, 10, 10, 0.95); /* Fondo casi sólido */
+            padding: 15px 20px;
+            border-radius: 2px;
+            /* Detalle elegante en el texto: Borde inferior dorado */
+            border-bottom: 2px solid var(--gold);
+            width: 90%; /* Un poco más angosto que la foto */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .caption h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            margin: 0 0 8px 0;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .caption p {
+            margin: 0; font-style: italic; font-size: 0.95rem; color: #ccc; line-height: 1.5;
+        }
+
+        /* --- JOSS (CUADRO FINAL DE LUJO) --- */
+        .gallery-item.final-frame {
+            width: 500px; 
+            z-index: 50; 
+        }
+
+        .gallery-item.final-frame .photo-frame {
+            height: 650px; 
+            padding: 20px; /* Paspartú más ancho */
+            border: 10px solid var(--gold); /* Marco totalmente dorado */
+            outline: 2px solid #fff; /* Detalle extra blanco fino */
+            box-shadow: 
+                inset 0 0 50px rgba(0,0,0,0.9), 
+                0 0 100px rgba(212, 175, 55, 0.4); /* Resplandor */
+        }
+
+        .gallery-item.final-frame .caption {
+            background: rgba(5, 5, 5, 0.95);
+            border: 1px solid var(--gold);
+            border-top: none;
+            padding: 30px; 
+            width: 100%;
+        }
+        
+        .gallery-item.final-frame .caption h3 {
+            font-size: 2rem; 
+            margin-bottom: 15px;
+        }
+
+        .gallery-item.final-frame .caption p {
+            font-size: 1.1rem; 
+        }
+
+        /* OUTRO */
+        .outro-section {
+            position: absolute;
+            z-index: 100;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            width: 90%;
+            max-width: 600px;
+            transform: translateZ(100px);
+        }
+
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.3; pointer-events: none; z-index: 0;
+        }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
+
+        @media (max-width: 768px) {
+            .gallery-item { width: 280px; }
+            .photo-frame { height: 360px; padding: 8px; border-width: 5px; } /* Ajuste de marco en móvil */
+            
+            .gallery-item.final-frame { width: 85vw; }
+            .gallery-item.final-frame .photo-frame { height: 55vh; padding: 12px; }
+            .gallery-item.final-frame .caption h3 { font-size: 1.5rem; }
+            .gallery-item.final-frame .caption p { font-size: 0.95rem; }
+            
+            h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+    <div id="scroll-track"></div>
+
+    <div class="viewport">
+        <div class="world">
+            
+            <div class="intro-section">
+                <h1>Un Refugio para Ti</h1>
+                <p style="font-size: 1.1rem; margin-top: 15px; font-weight: 300; font-style: italic;">Deja el mundo afuera por un momento.</p>
+                <div class="scroll-hint">▼ Desliza hacia abajo ▼</div>
+            </div>
+
+            <div id="gallery-wrapper"></div>
+
+            <div class="outro-section">
+                <h2 style="font-family: 'Mrs Saint Delafield', cursive; font-size: 4rem; color: #d4af37; margin-bottom: 15px;">Descansa, Joss</h2>
+                <p style="font-size: 1.2rem; margin-top: 10px; line-height: 1.8; color: #ddd;">
+                    Sé que terminas agotada y que a veces te exiges demasiado. Solo quería darte este pequeño detalle para recordarte que te admiro muchísimo.<br><br>
+                    Todo tu esfuerzo vale la pena.<br>
+                    <span style="color: #d4af37; font-style: italic;">Ojalá esto te haya sacado una sonrisa.</span>
+                </p>
+                <p style="font-size: 1.5rem; margin-top: 30px;">Tqm<br>❤️</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", (event) => {
+            
+            gsap.registerPlugin(ScrollTrigger);
+
+            const isMobile = window.innerWidth < 768;
+            
+            const spreadX = isMobile ? 80 : 450;
+            const spreadY = isMobile ? 30 : 60; 
+
+            // DATOS COMPLETOS
+            const framesData = [
+                { img: 'img1.jpg', title: 'Contigo en la Distancia', text: '"No hay bella melodía en que no surjas tú, ni yo quiero escucharla si no la escuchas tú."', x: -1, y: -0.3 },
+                { img: 'img2.jpg', title: 'Lara Jean', text: '"Escribir es dejar una parte del alma en el papel. Las cartas son para sentir."', x: 1, y: 0.3 },
+                { img: 'img3.jpg', title: 'Coincidir', text: 'El hecho de que nos hayamos conocido me hace muy feliz. Estaré feliz el tiempo que tenga el placer de tu compañía.', x: -0.8, y: 0.4 },
+                { img: 'img4.jpeg', title: 'Calma', text: 'No tienes que poder con todo hoy. Respira profundo. Lo estás haciendo increíblemente bien.', x: 1.2, y: -0.4 },
+                { img: 'img5.jpg', title: 'Capas', text: 'Como dijo Shrek: las mejores personas tienen capas. Y tú tienes las más brillantes.', x: 0, y: 0 }, 
+                { img: 'img6.jpeg', title: 'Magia', text: 'La belleza está en el interior... pero un buen libro siempre ayuda a encontrarla.', x: -1.2, y: -0.3 },
+                { img: 'img7.jpg', title: 'Esencia', text: 'La verdadera dulzura no está en el sabor, sino en la esencia. Y tú la llevas en cada gesto.', x: 0.8, y: 0.3 },
+                { img: 'img8.jpg', title: 'Hagamos un Trato', text: 'Mi día cambia en esos diez minutos en los que sé de ti, en los que me preguntas cómo me fue hoy...', x: -1, y: 0.2 },
+                { img: 'img9.jpg', title: 'Admiración', text: 'Verte esforzarte cada día es mi mayor inspiración. Estoy infinitamente orgulloso de ti.', x: 0.8, y: -0.4 },
+                { 
+                    img: 'img10.jpeg', 
+                    title: 'Simplemente Joss', 
+                    text: 'No importa cuánto ruido haga el mundo, tú siempre serás mi lugar de paz. Gracias por ser luz, por ser fuerza y por ser tú. Te admiro más de lo que las palabras pueden decir.', 
+                    x: 0, y: 0 
+                } 
+            ];
+
+            const wrapper = document.getElementById('gallery-wrapper');
+
+            framesData.forEach((data, i) => {
+                const el = document.createElement('div');
+                el.className = 'gallery-item';
+
+                const isFinalFrame = i === framesData.length - 1;
+                if (isFinalFrame) {
+                    el.classList.add('final-frame');
+                }
+                
+                // Nota: Asegúrate de tener las imágenes 'img1.jpg' a 'img10.jpg'
+                el.innerHTML = `
+                    <div class="photo-frame"><img src="${data.img}" alt="${data.title}"></div>
+                    <div class="caption">
+                        <h3>${data.title}</h3>
+                        <p>${data.text}</p>
+                    </div>
+                `;
+                el.dataset.x = data.x * spreadX;
+                el.dataset.y = data.y * spreadY;
+                el.dataset.isFinal = isFinalFrame;
+                
+                gsap.set(el, { z: -8000, opacity: 0 });
+                wrapper.appendChild(el);
+            });
+
+            const tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: "#scroll-track",
+                    start: "top top",
+                    end: "bottom bottom",
+                    scrub: 1.5, 
+                }
+            });
+
+            // 1. TÍTULO
+            tl.to(".intro-section", { opacity: 0, scale: 0.8, duration: 2, ease: "power1.out" });
+            tl.to({}, { duration: 2 }); 
+
+            // 2. CUADROS
+            const items = gsap.utils.toArray(".gallery-item");
+
+            items.forEach((item, i) => {
+                const isFinal = item.dataset.isFinal === "true";
+
+                if (!isFinal) {
+                    const xVal = parseFloat(item.dataset.x);
+                    const yVal = parseFloat(item.dataset.y);
+
+                    tl.fromTo(item, 
+                        { z: -6000, opacity: 0, x: 0, y: 0 }, 
+                        { 
+                            z: -350,
+                            x: xVal, 
+                            y: yVal, 
+                            opacity: 1, 
+                            duration: 8, 
+                            ease: "none"
+                        }
+                    );
+                    tl.to(item, {
+                        opacity: 0,
+                        z: 100,
+                        duration: 2,
+                        ease: "power1.in"
+                    });
+                    tl.to({}, { duration: 4 });
+
+                } else {
+                    // JOSS
+                    tl.fromTo(item, 
+                        { z: -200, opacity: 0, x: 0, y: 0, scale: 0.8 }, 
+                        { z: 0, opacity: 1, scale: 1, duration: 12, ease: "power2.out" }
+                    );
+                    tl.to({}, { duration: 15 });
+                    tl.to(item, { opacity: 0, duration: 4, ease: "power1.in" });
+                }
+            });
+
+            // 3. MENSAJE FINAL
+            tl.to(".outro-section", { opacity: 1, scale: 1.1, duration: 5 });
+
+        });
+    </script>
+</body>
+</html>
